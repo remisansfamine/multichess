@@ -12,6 +12,7 @@ public enum EPacketType
     UNDEFINED,
     TEAM,
     TEAM_TURN,
+    MOVE_VALIDITY,
     UNITY_MESSAGE,
     MOVEMENTS,
     CHAT_MESSAGE

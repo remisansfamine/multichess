@@ -131,6 +131,8 @@ public partial class ChessGameMgr : MonoBehaviour
     public EChessTeam team;
     public EChessTeam teamTurn = EChessTeam.None;
 
+    public Move? currentMove = null;
+
     List<uint> scores;
 
     public delegate void PlayerTurnEvent(bool isWhiteMove);
@@ -161,26 +163,62 @@ public partial class ChessGameMgr : MonoBehaviour
         }
     }
 
-    public void TryMove(Move move)
+    public void CheckMove(Move move)
     {
-        if (boardState.IsValidMove(teamTurn, move))
-        {
-            UpdateTurn(move);
+        bool isValid = boardState.IsValidMove(teamTurn, move);
+        m_playerManager.SendPacket(EPacketType.MOVE_VALIDITY, isValid);
 
-            m_playerManager.SendPacket(EPacketType.MOVEMENTS, move);
-            m_playerManager.SendPacket(EPacketType.TEAM_TURN, teamTurn);
-        }
+        if (!isValid)
+            return;
+
+        UpdateTurn(move);
+
+        m_playerManager.SendPacket(EPacketType.TEAM_TURN, teamTurn);
+
+        // SEND TO SPECS THE CORRECT MOVE
+    }
+
+    public bool TryMove(Move move)
+    {
+        bool isValid = boardState.IsValidMove(teamTurn, move);
+
+        if (!isValid)
+            return false;
+
+        m_playerManager.SendPacket(EPacketType.MOVEMENTS, move);
+
+        UpdateTurn(move);
+
+        m_playerManager.SendPacket(EPacketType.TEAM_TURN, teamTurn);
+
+        return true;
     }
 
     public void PlayTurn(Move move)
     {
         if (m_playerManager.isHost)
         {
-            TryMove(move);
+            if (!TryMove(move))
+                UpdatePieces();
         }
         else
         {
             m_playerManager.SendPacket(EPacketType.MOVEMENTS, move);
+        }
+    }
+
+    public void ResetTurn()
+    {
+        currentMove = null;
+        UpdatePieces();
+    }
+
+    public void UpdateTurn()
+    {
+        if (currentMove.HasValue)
+        {
+            UpdateTurn(currentMove.Value);
+            currentMove = null;
         }
     }
 
@@ -431,6 +469,8 @@ public partial class ChessGameMgr : MonoBehaviour
                 Move move = new Move();
                 move.From = startPos;
                 move.To = destPos;
+
+                currentMove = move;
 
                 PlayTurn(move);
             }
