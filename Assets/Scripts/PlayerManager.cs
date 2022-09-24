@@ -4,11 +4,11 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using UnityEngine.Events;
+using System.IO;
 
 public class PlayerManager : MonoBehaviour
 {
     public bool isHost { get; private set; } = false;
-    bool partyReady = false;
 
     bool enableListener = false;
 
@@ -188,10 +188,8 @@ public class PlayerManager : MonoBehaviour
 
                 InterpretPacket(packet);
             }
-            catch (Exception e)
+            catch (IOException e)
             {
-                Debug.LogError("Exception catch during packets listening " + e);
-
                 if (isHost)
                 {
                     // TODO: Set deconnection state to client
@@ -200,6 +198,10 @@ public class PlayerManager : MonoBehaviour
                 {
                     DisconnectFromServer();
                 }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("Exception catch during packets listening " + e);
             }
         }
     }
@@ -234,14 +236,11 @@ public class PlayerManager : MonoBehaviour
         {
             Debug.LogError("Error during server disconnection " + e);
         }
+
+        OnDisconnection();
     }
 
-    public void SetReady()
-    {
-        partyReady = true;
-
-        OnPartyReady.Invoke();
-    }
+    public void SetReady() => OnPartyReady.Invoke();
 
     public void StartGame()
     {
