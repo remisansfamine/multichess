@@ -175,8 +175,7 @@ public partial class ChessGameMgr : MonoBehaviour
         bool isValid = boardState.IsValidMove(teamTurn, move);
         m_playerManager.SendPacket(EPacketType.MOVE_VALIDITY, isValid);
 
-        if (!isValid)
-            return;
+        if (!isValid) return;
 
         UpdateTurn(move);
 
@@ -463,9 +462,8 @@ public partial class ChessGameMgr : MonoBehaviour
         else if (grabbed != null)
         {
             // find matching square when releasing grabbed piece
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
-            if (Physics.Raycast(ray, out hit, maxDistance, boardLayerMask))
+
+            if (CameraRayCast(out RaycastHit hit, maxDistance, boardLayerMask))
             {
                 grabbed.root.position = hit.transform.position + Vector3.up * zOffset;
             }
@@ -491,10 +489,7 @@ public partial class ChessGameMgr : MonoBehaviour
 
     void ComputeDrag()
     {
-        // drag grabbed piece on board
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
-        if (Physics.Raycast(ray, out hit, maxDistance, boardLayerMask))
+        if (CameraRayCast(out RaycastHit hit, maxDistance, boardLayerMask))
         {
             grabbed.root.position = hit.point;
         }
@@ -503,13 +498,17 @@ public partial class ChessGameMgr : MonoBehaviour
     void ComputeGrab()
     {
         // grab a new chess piece from board
-        RaycastHit hit;
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out hit, maxDistance, pieceLayerMask))
+        if (CameraRayCast(out RaycastHit hit, maxDistance, pieceLayerMask))
         {
             grabbed = hit.transform;
             startPos = GetBoardPos(hit.transform.position);
         }
+    }
+
+    bool CameraRayCast(out RaycastHit hit, float maxDist, int layerMask)
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        return Physics.Raycast(ray, out hit, maxDist, layerMask);
     }
 
     #endregion
