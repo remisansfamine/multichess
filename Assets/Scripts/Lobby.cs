@@ -11,7 +11,7 @@ public class Lobby : MonoBehaviour
     [SerializeField] private TMP_InputField m_pseudonymText;
     [SerializeField] private TMP_Text       m_playersText;
     [SerializeField] private TMP_Text       m_joinInfoText;
-    [SerializeField] private PlayerManager  m_playerManager;
+    [SerializeField] private Player  m_player;
 
     private void Awake()
     {
@@ -24,14 +24,12 @@ public class Lobby : MonoBehaviour
 
     private void OnEnable()
     {
-        m_playerManager.OnGameStartEvent.AddListener(OnGameStart);
-        m_playerManager.OnPartyReady.AddListener(OnClientConnected);
+        m_player.OnGameStartEvent.AddListener(OnGameStart);
     }
 
     private void OnDisable()
     {
-        m_playerManager.OnGameStartEvent.RemoveListener(OnGameStart);
-        m_playerManager.OnPartyReady.RemoveListener(OnClientConnected);
+        m_player.OnGameStartEvent.RemoveListener(OnGameStart);
     }
 
     private void Update()
@@ -61,14 +59,12 @@ public class Lobby : MonoBehaviour
 
     public void OnHost()
     {
-        m_playerManager.pseudo = m_pseudonymText.text;
-
         int port = int.Parse(m_inputHostPort.text);
 
-        Debug.Log($"Hosting server as {m_playerManager.pseudo} at PORT : {m_inputHostPort.text}");
-
         //  DO host server 
-        m_playerManager.Host(port);
+        Host host = m_player.SetNetworkState<Host>();
+        host.pseudo = m_pseudonymText.text;
+        host.OpenServer(port);
 
         PlayerPrefs.SetString("Preferences.Host.Port", m_inputHostPort.text);
         PlayerPrefs.SetString("Preferences.Pseudonym", m_pseudonymText.text);
@@ -76,12 +72,14 @@ public class Lobby : MonoBehaviour
 
     public void OnHostStop()
     {
-        m_playerManager.StopHost();
+        Host host = m_player.networkUser as Host;
+
+        if (host) host.CloseServer();
     }
 
     public void OnHostStartGame()
     {
-        m_playerManager.StartGame();
+        m_player.StartGame();
     }
 
 
@@ -93,7 +91,7 @@ public class Lobby : MonoBehaviour
 
     public void OnClientJoin()
     {
-        m_playerManager.pseudo = m_pseudonymText.text;
+        Client client = m_player.SetNetworkState<Client>();
 
         string IP = m_inputClientIP.text;
         int port = int.Parse(m_inputClientPort.text);
@@ -103,27 +101,27 @@ public class Lobby : MonoBehaviour
         //  DO join 
         try
         {
-            m_playerManager.Join(IP, port);
-
-            PlayerPrefs.SetString("Preferences.Client.IP", m_inputClientIP.text);
-            PlayerPrefs.SetString("Preferences.Client.Port", m_inputClientPort.text);
-
-            PlayerPrefs.SetString("Preferences.Pseudonym", m_pseudonymText.text);
+            client.Join(IP, port);
         }
         catch
         {
             ChangeText(m_joinInfoText, "Failed to join server :" + IP + "\nAt PORT :" + m_inputClientPort.text, new Color(1.0f, 0.1f, 0.0f));
         }
+        finally
+        {
+            PlayerPrefs.SetString("Preferences.Client.IP", m_inputClientIP.text);
+            PlayerPrefs.SetString("Preferences.Client.Port", m_inputClientPort.text);
+
+            PlayerPrefs.SetString("Preferences.Pseudonym", m_pseudonymText.text);
+
+            ChangeText(m_joinInfoText, "Successfully connected to " + m_inputClientIP.text + ":" + m_inputClientPort.text, new Color(0.50f, 1.0f, 0.50f));
+        }
     }
 
     public void OnClientUnjoin()
     {
-        m_playerManager.DisconnectFromServer();
-    }
-
-    public void OnClientConnected()
-    {
-        ChangeText(m_joinInfoText, "Successfully connected to " + m_inputClientIP.text + ":" + m_inputClientPort.text, new Color(0.50f, 1.0f, 0.50f));
+        Client client = m_player.networkUser as Client;
+        client.Disconnect();
     }
 
     private void ChangeText(TMP_Text textUi, string text, Color color)
