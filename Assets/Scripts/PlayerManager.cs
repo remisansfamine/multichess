@@ -4,11 +4,11 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using UnityEngine.Events;
+using System.IO;
 
 public class PlayerManager : MonoBehaviour
 {
     public bool isHost { get; private set; } = false;
-    bool partyReady = false;
 
     bool enableCommunication = false;
 
@@ -40,6 +40,9 @@ public class PlayerManager : MonoBehaviour
 
     public UnityEvent OnPartyReady = new UnityEvent();
     public UnityEvent OnGameStartEvent = new UnityEvent();
+    public UnityEvent OnGameLeaveEvent = new UnityEvent();
+    public UnityEvent OnGamePausedEvent = new UnityEvent();
+    public UnityEvent OnGameResumedEvent = new UnityEvent();
 
     public UnityEvent<Message> OnChatSentEvent = new UnityEvent<Message>();
     
@@ -149,7 +152,7 @@ public class PlayerManager : MonoBehaviour
                 if (isValid)
                     chessMgr.UpdateTurn();
                 else
-                    chessMgr.ResetTurn();
+                    chessMgr.ResetMove();
 
                 break;
             case EPacketType.UNITY_MESSAGE:
@@ -197,10 +200,8 @@ public class PlayerManager : MonoBehaviour
 
                 InterpretPacket(packet);
             }
-            catch (Exception e)
+            catch (IOException e)
             {
-                Debug.LogError("Exception catch during packets listening " + e);
-
                 if (isHost)
                 {
                     // TODO: Set disconnection state to client
@@ -209,6 +210,10 @@ public class PlayerManager : MonoBehaviour
                 {
                     DisconnectFromServer();
                 }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("Exception catch during packets listening " + e);
             }
         }
     }
@@ -248,19 +253,11 @@ public class PlayerManager : MonoBehaviour
         {
             Debug.LogError("Error during server disconnection " + e);
         }
+
+        OnDisconnection();
     }
 
-    private void OnClientDisconnection()
-    {
-        DisconnectFromServer();
-    }
-
-    public void SetReady()
-    {
-        partyReady = true;
-
-        OnPartyReady.Invoke();
-    }
+    public void SetReady() => OnPartyReady.Invoke();
 
     public void StartGame()
     {
@@ -278,6 +275,10 @@ public class PlayerManager : MonoBehaviour
         OnGameStartEvent.Invoke();
     }
 
+    private void OnDisconnection() => OnGameLeaveEvent.Invoke();
+    private void OnPause() => OnGamePausedEvent.Invoke();
+    private void OnResume() => OnGameResumedEvent.Invoke();
+    
     private void OnDestroy()
     {
         DisconnectFromServer();
