@@ -242,6 +242,8 @@ public partial class ChessGameMgr : MonoBehaviour
 
     public void ResetGame()
     {
+        teamTurn = EChessTeam.White;
+
         m_playerManager.SendNetMessage("ResetGame");
 
         endScreen?.SetActive(false);
