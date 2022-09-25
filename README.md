@@ -1,5 +1,5 @@
 # Multichess - Unity/C#
-## ISART DIGITAL : School Project - GP2 - Noé MOUCHEL - Rémi GINER
+## ISART DIGITAL : School Project - GP2 - Noï¿½ MOUCHEL - Rï¿½mi GINER
 
 
 <!-- ABOUT THE PROJECT -->
@@ -11,8 +11,11 @@ The goal of the project is to create a local network multiplayer mode for a give
 ## Preview
 <div style="text-align:center">
 
-![Preview](Annexe/Preview.gif)
+![Host](media/ChessHost.gif)
+**Host view**
 
+![Client](media/ChessClient.gif)
+**Client view**
 </div>
 
 # How to launch
@@ -186,5 +189,5 @@ Given with the template project
 We used Git Lab for the versioning.
 
 ## Authors
-**Noé MOUCHEL**
-**Rémi GINER**
+**Noï¿½ MOUCHEL**
+**Rï¿½mi GINER**
